@@ -30,15 +30,16 @@ export default function OrderList() {
     <div id="orderList">
       <h2>Pizza Orders</h2>
       {loading ? (
-        <p>Loading orders...</p>
+        <p data-testid="loadingMessage">Loading orders...</p>
       ) : (
         <ol>
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order, index) => (
               <li key={index} className="order-box">
                 <div>
-                  <strong>{order.customer}</strong> ordered a <strong>{order.size}</strong> pizza with{' '}
-                  {order.toppings && order.toppings.length > 0
+                  <strong>{order.fullName || order.customer}</strong> ordered a{' '}
+                  <strong>{order.size}</strong> pizza with{' '}
+                  {order.toppings?.length > 0
                     ? order.toppings.join(', ')
                     : 'no toppings'}
                   .

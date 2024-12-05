@@ -6,6 +6,8 @@ export default function PizzaForm() {
   const [fullName, setFullName] = useState('');
   const [size, setSize] = useState('');
   const [toppings, setToppings] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
 
   const toppingOptions = [
     { id: '1', name: 'Pepperoni' },
@@ -26,11 +28,19 @@ export default function PizzaForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const orderData = {
-      fullName,
-      size,
-      toppings,
-    };
+    if (!fullName) {
+      setValidationMessage('Full name is required.');
+      return;
+    }
+    if (!size) {
+      setValidationMessage('Size must be selected.');
+      return;
+    }
+
+    setValidationMessage('');
+    setIsLoading(true);
+
+    const orderData = { fullName, size, toppings };
 
     try {
       const response = await fetch('http://localhost:9009/api/pizza/order', {
@@ -45,10 +55,13 @@ export default function PizzaForm() {
         setFullName('');
         setSize('');
         setToppings([]);
+      } else {
+        console.error('Error submitting order:', response.statusText);
       }
-      // No frontend error handling—error responses will fail silently.
     } catch (error) {
       console.error('Error submitting order:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,41 +70,40 @@ export default function PizzaForm() {
       <h2>Pizza Form</h2>
 
       <div className="input-group">
-
-      <div>
         <label htmlFor="fullName">Full Name:</label>
         <input
-   data-testid="fullNameInput"
-            id="fullName"
-            name="fullName"
-            placeholder="Type full name"          type="text"
+          data-testid="fullNameInput"
+          id="fullName"
+          name="fullName"
+          placeholder="Type full name"
+          type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
         />
       </div>
-      </div>
-      <div className="input-group">
 
-      <div>
+      <div className="input-group">
         <label htmlFor="size">Size:</label>
         <select
           id="size"
           value={size}
           onChange={(e) => setSize(e.target.value)}
+          data-testid="sizeSelect"
         >
-            <option value="">----Choose size----</option>
-            <option value="S">Small</option>
+          <option value="">----Choose size----</option>
+          <option value="S">Small</option>
           <option value="M">Medium</option>
           <option value="L">Large</option>
         </select>
       </div>
-      </div>
+
       <div className="input-group">
         <label>Toppings:</label>
         {toppingOptions.map((topping) => (
           <div key={topping.id}>
             <label>
               <input
+                data-testid={`check${topping.name.replace(' ', '')}`}
                 type="checkbox"
                 value={topping.id}
                 checked={toppings.includes(topping.id)}
@@ -102,6 +114,10 @@ export default function PizzaForm() {
           </div>
         ))}
       </div>
+
+      {validationMessage && <p data-testid="validationMessage">{validationMessage}</p>}
+      {isLoading && <p data-testid="loadingMessage">Order in progress...</p>}
+
       <input data-testid="submit" type="submit" />
     </form>
   );
