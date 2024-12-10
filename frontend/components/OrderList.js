@@ -11,7 +11,7 @@ export default function OrderList() {
       try {
         const response = await fetch('http://localhost:9009/api/pizza/history');
         const data = await response.json();
-        dispatch({ type: 'SET_ORDERS', payload: data }); // Populate the global state
+        dispatch({ type: 'SET_ORDERS', payload: data });
       } catch (error) {
         console.error('Error fetching orders:', error);
       } finally {
@@ -22,7 +22,6 @@ export default function OrderList() {
     fetchOrders();
   }, [dispatch]);
 
-  // Filter orders based on the selected size
   const filteredOrders =
     filter === 'All' ? state.orders : state.orders.filter((order) => order.size === filter);
 
@@ -30,20 +29,17 @@ export default function OrderList() {
     <div id="orderList">
       <h2>Pizza Orders</h2>
       {loading ? (
-        <p data-testid="loadingMessage">Loading orders...</p>
+        <p>Loading orders...</p>
       ) : (
         <ol>
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order, index) => (
               <li key={index} className="order-box">
-                <div>
-                  <strong>{order.fullName || order.customer}</strong> ordered a{' '}
-                  <strong>{order.size}</strong> pizza with{' '}
-                  {order.toppings?.length > 0
-                    ? order.toppings.join(', ')
-                    : 'no toppings'}
-                  .
-                </div>
+                {order.customer || order.fullName} ordered a size {order.size}{' '}
+                {order.toppings?.length
+                  ? `with ${order.toppings.length} topping${order.toppings.length > 1 ? 's' : ''}`
+                  : 'with no toppings'}
+                .
               </li>
             ))
           ) : (
@@ -51,6 +47,7 @@ export default function OrderList() {
           )}
         </ol>
       )}
+
       <div id="sizeFilters">
         <p>Filter by size:</p>
         {['All', 'S', 'M', 'L'].map((size) => (

@@ -10,11 +10,11 @@ export default function PizzaForm() {
   const [validationMessage, setValidationMessage] = useState('');
 
   const toppingOptions = [
-    { id: '1', name: 'Pepperoni' },
-    { id: '2', name: 'Green Peppers' },
-    { id: '3', name: 'Pineapple' },
-    { id: '4', name: 'Mushrooms' },
-    { id: '5', name: 'Ham' },
+    { id: '1', name: 'Pepperoni', testId: 'checkPepperoni' },
+    { id: '2', name: 'Green Peppers', testId: 'checkGreenpeppers' }, // Lowercase "p"
+    { id: '3', name: 'Pineapple', testId: 'checkPineapple' },
+    { id: '4', name: 'Mushrooms', testId: 'checkMushrooms' },
+    { id: '5', name: 'Ham', testId: 'checkHam' },
   ];
 
   const handleToppingChange = (toppingId) => {
@@ -28,19 +28,16 @@ export default function PizzaForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!fullName) {
-      setValidationMessage('Full name is required.');
-      return;
-    }
-    if (!size) {
-      setValidationMessage('Size must be selected.');
-      return;
-    }
-
     setValidationMessage('');
     setIsLoading(true);
 
-    const orderData = { fullName, size, toppings };
+    const orderData = {
+      customer: fullName,
+      size,
+      toppings,
+    };
+
+    dispatch({ type: 'ADD_ORDER', payload: orderData });
 
     try {
       const response = await fetch('http://localhost:9009/api/pizza/order', {
@@ -49,17 +46,19 @@ export default function PizzaForm() {
         body: JSON.stringify(orderData),
       });
 
-      if (response.ok) {
-        const newOrder = await response.json();
-        dispatch({ type: 'ADD_ORDER', payload: newOrder });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setValidationMessage(errorData.message);
+        dispatch({ type: 'REMOVE_ORDER', payload: orderData });
+      } else {
         setFullName('');
         setSize('');
         setToppings([]);
-      } else {
-        console.error('Error submitting order:', response.statusText);
+        setValidationMessage('');
       }
     } catch (error) {
       console.error('Error submitting order:', error);
+      dispatch({ type: 'REMOVE_ORDER', payload: orderData });
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +89,7 @@ export default function PizzaForm() {
           onChange={(e) => setSize(e.target.value)}
           data-testid="sizeSelect"
         >
-          <option value="">----Choose size----</option>
+          <option value="">Choose size</option>
           <option value="S">Small</option>
           <option value="M">Medium</option>
           <option value="L">Large</option>
@@ -103,7 +102,7 @@ export default function PizzaForm() {
           <div key={topping.id}>
             <label>
               <input
-                data-testid={`check${topping.name.replace(' ', '')}`}
+                data-testid={topping.testId}
                 type="checkbox"
                 value={topping.id}
                 checked={toppings.includes(topping.id)}
@@ -118,7 +117,9 @@ export default function PizzaForm() {
       {validationMessage && <p data-testid="validationMessage">{validationMessage}</p>}
       {isLoading && <p data-testid="loadingMessage">Order in progress...</p>}
 
-      <input data-testid="submit" type="submit" />
+      <button data-testid="submit" type="submit">
+        Submit
+      </button>
     </form>
   );
 }
